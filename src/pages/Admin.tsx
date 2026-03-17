@@ -72,6 +72,9 @@ const Admin = () => {
   const [serviceForm, setServiceForm] = useState<Omit<AdminService, "_id">>(emptyService);
   const [creatorForm, setCreatorForm] = useState<Omit<AdminCreator, "_id">>(emptyCreator);
   const [projectForm, setProjectForm] = useState<Omit<AdminProject, "_id">>(emptyProject);
+  const [projectCategories, setProjectCategories] = useState<string[]>([...categoryOptions]);
+  const [showAddCategory, setShowAddCategory] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState("");
   const [settingsForm, setSettingsForm] = useState<AdminSettings>({ email: "", phone: "", location: "", whatsappNumber: "", socials: [] });
   const [aboutForm, setAboutForm] = useState<AdminAbout>({ heroTitle: "", heroDescription: "", stats: [], storyTitle: "", storyContent: [], valuesTitle: "", values: [{ title: "", description: "" }], teamTitle: "", teamDescription: "" });
   const [isSaving, setIsSaving] = useState(false);
@@ -113,6 +116,15 @@ const Admin = () => {
     setSettingsForm(settingsData);
     setAbout(aboutData);
     setAboutForm(aboutData);
+
+    // Populate project categories from existing projects and defaults
+    const projectCats = new Set<string>(categoryOptions);
+    projectsData.forEach((project: any) => {
+      if (project.cat) {
+        projectCats.add(project.cat);
+      }
+    });
+    setProjectCategories(Array.from(projectCats).sort());
   };
 
   const handleLogout = () => {
@@ -149,6 +161,18 @@ const Admin = () => {
     setDeleteDialog({ open: true, type, id, name });
   };
 
+  const handleAddCategory = () => {
+    if (newCategoryName.trim()) {
+      const newCat = newCategoryName.trim();
+      setProjectForm({ ...projectForm, cat: newCat });
+      if (!projectCategories.includes(newCat)) {
+        setProjectCategories([...projectCategories, newCat].sort());
+      }
+      setNewCategoryName("");
+      setShowAddCategory(false);
+    }
+  };
+
   // ─── Form Close Handlers ───
   const closeServiceForm = () => {
     setShowServiceForm(false);
@@ -166,6 +190,7 @@ const Admin = () => {
     setShowProjectForm(false);
     setEditingProjectId(null);
     setProjectForm(emptyProject);
+    setShowAddCategory(false);
   };
 
   const closeSettingsForm = () => {
@@ -654,10 +679,57 @@ const Admin = () => {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-foreground mb-1.5">Category</label>
-                        <select value={projectForm.cat} onChange={(e) => setProjectForm({ ...projectForm, cat: e.target.value })} className="input-admin">
-                          <option value="">Select category</option>
-                          {categoryOptions.map((c) => <option key={c} value={c}>{c}</option>)}
-                        </select>
+                        {showAddCategory ? (
+                          <div className="space-y-2">
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={newCategoryName}
+                                onChange={(e) => setNewCategoryName(e.target.value)}
+                                onKeyPress={(e) => e.key === "Enter" && handleAddCategory()}
+                                className="flex-1 input-admin"
+                                placeholder="Enter new category name"
+                                autoFocus
+                              />
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                type="button"
+                                onClick={handleAddCategory}
+                                className="flex-1 px-3 py-2 rounded-lg bg-accent text-accent-foreground font-medium text-sm hover:opacity-90 transition-opacity"
+                              >
+                                Add Category
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setNewCategoryName("");
+                                  setShowAddCategory(false);
+                                }}
+                                className="flex-1 px-3 py-2 rounded-lg border border-border text-foreground font-medium text-sm hover:bg-secondary transition-colors"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex gap-2">
+                            <select value={projectForm.cat} onChange={(e) => {
+                              setProjectForm({ ...projectForm, cat: e.target.value });
+                            }} className="input-admin flex-1">
+                              <option value="">Select category</option>
+                              {projectCategories.map((c) => <option key={c} value={c}>{c}</option>)}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => setShowAddCategory(true)}
+                              className="px-4 py-2 rounded-lg bg-accent text-accent-foreground font-medium text-sm hover:opacity-90 transition-opacity whitespace-nowrap flex items-center justify-center gap-1"
+                              title="Add new category"
+                            >
+                              <Plus size={16} /> Add
+                            </button>
+                          </div>
+                        )}
                       </div>
                       <InputField label="Year" value={projectForm.year} onChange={(v) => setProjectForm({ ...projectForm, year: v })} placeholder="2024" />
                     </div>
