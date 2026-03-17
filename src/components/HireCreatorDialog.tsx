@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Send, User, Mail, Briefcase, MessageSquare, Heart } from "lucide-react";
+import { X, Send, User, Mail, Briefcase, MessageSquare, Heart, ArrowLeft } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogContent,
@@ -152,6 +152,17 @@ _This message was sent through our Creator Collaboration Platform_`;
                 Let us know about your project and why you'd love to work together
               </AlertDialogDescription>
             </div>
+            <button
+              type="button"
+              onClick={() => {
+                handleReset();
+                onOpenChange(false);
+              }}
+              className="p-2 -mr-2 -mt-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground flex-shrink-0"
+              title="Go back"
+            >
+              <ArrowLeft size={20} />
+            </button>
           </div>
         </AlertDialogHeader>
 
@@ -335,19 +346,9 @@ _This message was sent through our Creator Collaboration Platform_`;
             className="flex gap-3 pt-4"
           >
             <button
-              type="button"
-              onClick={() => {
-                handleReset();
-                onOpenChange(false);
-              }}
-              className="flex-1 px-4 py-3 rounded-lg border border-border text-foreground font-semibold text-sm hover:bg-secondary transition-colors"
-            >
-              Cancel
-            </button>
-            <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 gradient-bg text-accent-foreground py-3 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60"
+              className="w-full gradient-bg text-accent-foreground py-3 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60"
             >
               <Send size={16} />
               {isSubmitting ? "Sending..." : "Send Collaboration Request"}

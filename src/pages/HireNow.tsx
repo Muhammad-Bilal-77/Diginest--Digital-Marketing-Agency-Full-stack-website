@@ -233,14 +233,23 @@ const HireNow = () => {
             />
           </div>
 
-          {/* Submit */}
-          <button
-            type="submit"
-            className="w-full gradient-bg text-accent-foreground py-4 rounded-xl font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
-          >
-            <Send size={16} />
-            Send via WhatsApp
-          </button>
+          {/* Submit & Back Buttons */}
+          <div className="flex gap-3 pt-2">
+            <Link
+              to="/"
+              className="flex-1 py-4 rounded-xl font-bold text-sm border border-border text-foreground hover:bg-secondary transition-colors flex items-center justify-center gap-2"
+            >
+              <ArrowLeft size={16} />
+              Back
+            </Link>
+            <button
+              type="submit"
+              className="flex-1 gradient-bg text-accent-foreground py-4 rounded-xl font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+            >
+              <Send size={16} />
+              Send via WhatsApp
+            </button>
+          </div>
 
           <p className="text-xs text-muted-foreground text-center">
             You'll be redirected to WhatsApp to send us your inquiry directly.
