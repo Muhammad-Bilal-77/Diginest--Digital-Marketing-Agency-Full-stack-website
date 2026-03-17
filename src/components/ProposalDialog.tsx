@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Send, User, Briefcase, DollarSign, MessageSquare, Calendar, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -23,14 +23,34 @@ const ProposalDialog = ({ open, onOpenChange, mode }: ProposalDialogProps) => {
   const [message, setMessage] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("923104833310");
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const response = await fetch("/api/settings");
+        if (response.ok) {
+          const data = await response.json();
+          const cleaned = data.whatsappNumber.replace(/\D/g, "");
+          setWhatsappNumber(cleaned);
+        }
+      } catch (error) {
+        console.error("Error fetching settings:", error);
+      }
+    };
+
+    if (open) {
+      fetchSettings();
+    }
+  }, [open]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const isConsultation = mode === "consultation";
     const text = isConsultation
-      ? `Hi NexusMedia! 👋\n\n*Consultation Booking*\n*Name:* ${name}\n*Email:* ${email}\n*Phone:* ${phone}\n*Service:* ${service}\n*Preferred Date:* ${date}\n*Preferred Time:* ${time}\n*Details:* ${message}`
-      : `Hi NexusMedia! 👋\n\n*Free Proposal Request*\n*Name:* ${name}\n*Email:* ${email}\n*Phone:* ${phone}\n*Service:* ${service}\n*Budget:* ${budget}\n*Details:* ${message}`;
-    window.open(`https://wa.me/923104833310?text=${encodeURIComponent(text)}`, "_blank");
+      ? `Hi Digi nest! 👋\n\n*Consultation Booking*\n*Name:* ${name}\n*Email:* ${email}\n*Phone:* ${phone}\n*Service:* ${service}\n*Preferred Date:* ${date}\n*Preferred Time:* ${time}\n*Details:* ${message}`
+      : `Hi Digi nest! 👋\n\n*Free Proposal Request*\n*Name:* ${name}\n*Email:* ${email}\n*Phone:* ${phone}\n*Service:* ${service}\n*Budget:* ${budget}\n*Details:* ${message}`;
+    window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, "_blank");
     toast({ title: "Redirecting to WhatsApp", description: "Complete your inquiry on WhatsApp." });
     onOpenChange(false);
     resetForm();

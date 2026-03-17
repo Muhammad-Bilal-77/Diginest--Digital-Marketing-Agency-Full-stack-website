@@ -2,22 +2,22 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  LogOut, Plus, Trash2, Edit2, X, Save, Briefcase, Users, FolderOpen,
-  ChevronDown, ChevronUp, Image
+  LogOut, Plus, Trash2, Edit2, X, Save, Briefcase, Users, FolderOpen, Settings,
 } from "lucide-react";
-import { adminAuth, servicesStore, creatorsStore, projectsStore } from "@/lib/adminStore";
-import type { AdminService, AdminCreator, AdminProject } from "@/lib/adminStore";
+import { adminAuth, servicesApi, creatorsApi, projectsApi, settingsApi, aboutApi } from "@/lib/adminApi";
+import type { AdminService, AdminCreator, AdminProject, AdminSettings, AdminAbout } from "@/lib/adminApi";
 import { useToast } from "@/hooks/use-toast";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import ImageUpload from "@/components/ImageUpload";
+import IconPicker from "@/components/IconPicker";
 
-type Tab = "services" | "creators" | "projects";
+type Tab = "services" | "creators" | "projects" | "settings" | "about";
 
 // ─── Helpers ───
-const emptyService: Omit<AdminService, "id"> = {
+const emptyService: Omit<AdminService, "_id"> = {
   title: "", slug: "", desc: "", tagline: "", description: "", heroImage: "", icon: "Palette",
   features: [{ title: "", desc: "" }],
   process: [{ step: "", desc: "" }],
@@ -26,11 +26,11 @@ const emptyService: Omit<AdminService, "id"> = {
   faqs: [{ q: "", a: "" }],
 };
 
-const emptyCreator: Omit<AdminCreator, "id"> = {
+const emptyCreator: Omit<AdminCreator, "_id"> = {
   name: "", category: "", followers: "", price: "", color: "from-blue-500 to-cyan-400", image: "",
 };
 
-const emptyProject: Omit<AdminProject, "id"> = {
+const emptyProject: Omit<AdminProject, "_id"> = {
   title: "", cat: "", img: "", desc: "", client: "", duration: "", year: "",
   challenge: "", solution: "",
   results: [{ label: "", value: "" }],
@@ -57,17 +57,24 @@ const Admin = () => {
   const [services, setServices] = useState<AdminService[]>([]);
   const [creators, setCreators] = useState<AdminCreator[]>([]);
   const [projects, setProjects] = useState<AdminProject[]>([]);
+  const [settings, setSettings] = useState<AdminSettings | null>(null);
+  const [about, setAbout] = useState<AdminAbout | null>(null);
 
   const [showServiceForm, setShowServiceForm] = useState(false);
   const [showCreatorForm, setShowCreatorForm] = useState(false);
   const [showProjectForm, setShowProjectForm] = useState(false);
+  const [showSettingsForm, setShowSettingsForm] = useState(false);
+  const [showAboutForm, setShowAboutForm] = useState(false);
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
   const [editingCreatorId, setEditingCreatorId] = useState<string | null>(null);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
 
-  const [serviceForm, setServiceForm] = useState<Omit<AdminService, "id">>(emptyService);
-  const [creatorForm, setCreatorForm] = useState<Omit<AdminCreator, "id">>(emptyCreator);
-  const [projectForm, setProjectForm] = useState<Omit<AdminProject, "id">>(emptyProject);
+  const [serviceForm, setServiceForm] = useState<Omit<AdminService, "_id">>(emptyService);
+  const [creatorForm, setCreatorForm] = useState<Omit<AdminCreator, "_id">>(emptyCreator);
+  const [projectForm, setProjectForm] = useState<Omit<AdminProject, "_id">>(emptyProject);
+  const [settingsForm, setSettingsForm] = useState<AdminSettings>({ email: "", phone: "", location: "", whatsappNumber: "", socials: [] });
+  const [aboutForm, setAboutForm] = useState<AdminAbout>({ heroTitle: "", heroDescription: "", stats: [], storyTitle: "", storyContent: [], valuesTitle: "", values: [{ title: "", description: "" }], teamTitle: "", teamDescription: "" });
+  const [isSaving, setIsSaving] = useState(false);
 
   // Delete confirmation state
   const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; type: string; id: string; name: string }>({
@@ -75,14 +82,37 @@ const Admin = () => {
   });
 
   useEffect(() => {
-    if (!adminAuth.isLoggedIn()) { navigate("/admin-login"); return; }
-    refreshData();
+    if (!adminAuth.isLoggedIn()) {
+      navigate("/admin-login");
+      return;
+    }
+
+    void (async () => {
+      try {
+        await adminAuth.verify();
+        await refreshData();
+      } catch {
+        adminAuth.logout();
+        navigate("/admin-login");
+      }
+    })();
   }, [navigate]);
 
-  const refreshData = () => {
-    setServices(servicesStore.getAll());
-    setCreators(creatorsStore.getAll());
-    setProjects(projectsStore.getAll());
+  const refreshData = async () => {
+    const [servicesData, creatorsData, projectsData, settingsData, aboutData] = await Promise.all([
+      servicesApi.list(),
+      creatorsApi.list(),
+      projectsApi.list(),
+      settingsApi.get(),
+      aboutApi.get(),
+    ]);
+    setServices(servicesData);
+    setCreators(creatorsData);
+    setProjects(projectsData);
+    setSettings(settingsData);
+    setSettingsForm(settingsData);
+    setAbout(aboutData);
+    setAboutForm(aboutData);
   };
 
   const handleLogout = () => {
@@ -90,98 +120,235 @@ const Admin = () => {
     navigate("/admin-login");
   };
 
-  const confirmDelete = () => {
+  const confirmDelete = async () => {
     const { type, id } = deleteDialog;
-    if (type === "service") { servicesStore.remove(id); toast({ title: "Service deleted" }); }
-    else if (type === "creator") { creatorsStore.remove(id); toast({ title: "Creator deleted" }); }
-    else if (type === "project") { projectsStore.remove(id); toast({ title: "Project deleted" }); }
+    try {
+      if (type === "service") {
+        await servicesApi.remove(id);
+        toast({ title: "Service deleted" });
+      } else if (type === "creator") {
+        await creatorsApi.remove(id);
+        toast({ title: "Creator deleted" });
+      } else if (type === "project") {
+        await projectsApi.remove(id);
+        toast({ title: "Project deleted" });
+      }
+      await refreshData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Delete failed",
+        variant: "destructive",
+      });
+    }
+
     setDeleteDialog({ open: false, type: "", id: "", name: "" });
-    refreshData();
   };
 
   const openDeleteDialog = (type: string, id: string, name: string) => {
     setDeleteDialog({ open: true, type, id, name });
   };
 
+  // ─── Form Close Handlers ───
+  const closeServiceForm = () => {
+    setShowServiceForm(false);
+    setEditingServiceId(null);
+    setServiceForm(emptyService);
+  };
+
+  const closeCreatorForm = () => {
+    setShowCreatorForm(false);
+    setEditingCreatorId(null);
+    setCreatorForm(emptyCreator);
+  };
+
+  const closeProjectForm = () => {
+    setShowProjectForm(false);
+    setEditingProjectId(null);
+    setProjectForm(emptyProject);
+  };
+
+  const closeSettingsForm = () => {
+    setShowSettingsForm(false);
+    setSettingsForm(settings || { email: "", phone: "", location: "", whatsappNumber: "", socials: [] });
+  };
+
+  const closeAboutForm = () => {
+    setShowAboutForm(false);
+    setAboutForm(about || { heroTitle: "", heroDescription: "", stats: [], storyTitle: "", storyContent: [], valuesTitle: "", values: [{ title: "", description: "" }], teamTitle: "", teamDescription: "" });
+  };
+
   // ─── Service CRUD ───
-  const saveService = () => {
+  const saveService = async () => {
     if (!serviceForm.title || !serviceForm.slug) {
       toast({ title: "Error", description: "Title and slug are required", variant: "destructive" });
       return;
     }
-    if (editingServiceId) {
-      servicesStore.update(editingServiceId, serviceForm);
-      toast({ title: "Service updated" });
-    } else {
-      servicesStore.add(serviceForm);
-      toast({ title: "Service added" });
+    setIsSaving(true);
+    try {
+      if (editingServiceId) {
+        await servicesApi.update(editingServiceId, serviceForm);
+        toast({ title: "Service updated" });
+      } else {
+        await servicesApi.create(serviceForm);
+        toast({ title: "Service added" });
+      }
+      setShowServiceForm(false);
+      setEditingServiceId(null);
+      setServiceForm(emptyService);
+      await refreshData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Save failed",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
-    setShowServiceForm(false);
-    setEditingServiceId(null);
-    setServiceForm(emptyService);
-    refreshData();
   };
 
   const editService = (s: AdminService) => {
-    setServiceForm({ ...s });
-    setEditingServiceId(s.id);
+    const { _id, __v, ...formData } = s as unknown as { _id: string; __v?: unknown };
+    setServiceForm(formData as Omit<AdminService, "_id">);
+    setEditingServiceId(_id);
     setShowServiceForm(true);
   };
 
   // ─── Creator CRUD ───
-  const saveCreator = () => {
+  const saveCreator = async () => {
     if (!creatorForm.name) {
       toast({ title: "Error", description: "Name is required", variant: "destructive" });
       return;
     }
-    if (editingCreatorId) {
-      creatorsStore.update(editingCreatorId, creatorForm);
-      toast({ title: "Creator updated" });
-    } else {
-      creatorsStore.add(creatorForm);
-      toast({ title: "Creator added" });
+    setIsSaving(true);
+    try {
+      if (editingCreatorId) {
+        await creatorsApi.update(editingCreatorId, creatorForm);
+        toast({ title: "Creator updated" });
+      } else {
+        await creatorsApi.create(creatorForm);
+        toast({ title: "Creator added" });
+      }
+      setShowCreatorForm(false);
+      setEditingCreatorId(null);
+      setCreatorForm(emptyCreator);
+      await refreshData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Save failed",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
-    setShowCreatorForm(false);
-    setEditingCreatorId(null);
-    setCreatorForm(emptyCreator);
-    refreshData();
   };
 
   const editCreator = (c: AdminCreator) => {
-    setCreatorForm({ ...c });
-    setEditingCreatorId(c.id);
+    const { _id, __v, ...formData } = c as unknown as { _id: string; __v?: unknown };
+    setCreatorForm(formData as Omit<AdminCreator, "_id">);
+    setEditingCreatorId(_id);
     setShowCreatorForm(true);
   };
 
   // ─── Project CRUD ───
-  const saveProject = () => {
+  const saveProject = async () => {
     if (!projectForm.title || !projectForm.cat) {
       toast({ title: "Error", description: "Title and category are required", variant: "destructive" });
       return;
     }
-    if (editingProjectId) {
-      projectsStore.update(editingProjectId, projectForm);
-      toast({ title: "Project updated" });
-    } else {
-      projectsStore.add(projectForm);
-      toast({ title: "Project added" });
+    setIsSaving(true);
+    try {
+      if (editingProjectId) {
+        await projectsApi.update(editingProjectId, projectForm);
+        toast({ title: "Project updated" });
+      } else {
+        await projectsApi.create(projectForm);
+        toast({ title: "Project added" });
+      }
+      setShowProjectForm(false);
+      setEditingProjectId(null);
+      setProjectForm(emptyProject);
+      await refreshData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Save failed",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
     }
-    setShowProjectForm(false);
-    setEditingProjectId(null);
-    setProjectForm(emptyProject);
-    refreshData();
   };
 
   const editProject = (p: AdminProject) => {
-    setProjectForm({ ...p });
-    setEditingProjectId(p.id);
+    const { _id, __v, ...formData } = p as unknown as { _id: string; __v?: unknown };
+    setProjectForm(formData as Omit<AdminProject, "_id">);
+    setEditingProjectId(_id);
     setShowProjectForm(true);
+  };
+
+  // ─── Settings CRUD ───
+  const editSettings = () => {
+    if (settings) {
+      const { _id, __v, ...formData } = settings as unknown as { _id?: string; __v?: unknown };
+      setSettingsForm(formData as AdminSettings);
+      setShowSettingsForm(true);
+    }
+  };
+
+  const saveSettings = async () => {
+    setIsSaving(true);
+    try {
+      await settingsApi.update(settingsForm);
+      toast({ title: "Settings updated" });
+      setShowSettingsForm(false);
+      await refreshData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Save failed",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // ─── About CRUD ───
+  const editAbout = () => {
+    if (about) {
+      const { _id, __v, ...formData } = about as unknown as { _id?: string; __v?: unknown };
+      setAboutForm(formData as AdminAbout);
+      setShowAboutForm(true);
+    }
+  };
+
+  const saveAbout = async () => {
+    setIsSaving(true);
+    try {
+      await aboutApi.update(aboutForm);
+      toast({ title: "About page updated" });
+      setShowAboutForm(false);
+      await refreshData();
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Save failed",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   const tabs: { key: Tab; label: string; icon: React.ElementType; count: number }[] = [
     { key: "services", label: "Services", icon: Briefcase, count: services.length },
     { key: "creators", label: "Creators", icon: Users, count: creators.length },
     { key: "projects", label: "Projects", icon: FolderOpen, count: projects.length },
+    { key: "settings", label: "Settings", icon: Settings, count: 1 },
+    { key: "about", label: "About", icon: Briefcase, count: 1 },
   ];
 
   return (
@@ -250,7 +417,7 @@ const Admin = () => {
                 <p className="text-center text-muted-foreground py-12">No services added yet. Click "Add Service" to get started.</p>
               )}
               {services.map((s) => (
-                <div key={s.id} className="bg-card border border-border rounded-xl p-5 flex items-center justify-between">
+                <div key={s._id} className="bg-card border border-border rounded-xl p-5 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     {s.heroImage && (
                       <img src={s.heroImage} alt={s.title} className="w-14 h-14 rounded-lg object-cover" />
@@ -264,7 +431,7 @@ const Admin = () => {
                     <button onClick={() => editService(s)} className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
                       <Edit2 size={16} />
                     </button>
-                    <button onClick={() => openDeleteDialog("service", s.id, s.title)} className="p-2 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive">
+                    <button onClick={() => openDeleteDialog("service", s._id, s.title)} className="p-2 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive">
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -274,7 +441,7 @@ const Admin = () => {
 
             <AnimatePresence>
               {showServiceForm && (
-                <FormModal title={editingServiceId ? "Edit Service" : "Add Service"} onClose={() => { setShowServiceForm(false); setEditingServiceId(null); }}>
+                <FormModal title={editingServiceId ? "Edit Service" : "Add Service"} onClose={closeServiceForm}>
                   <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">
                       <InputField label="Title" value={serviceForm.title} onChange={(v) => setServiceForm({ ...serviceForm, title: v, slug: v.toLowerCase().replace(/[^a-z0-9]+/g, "-") })} />
@@ -284,6 +451,7 @@ const Admin = () => {
                     <InputField label="Tagline" value={serviceForm.tagline} onChange={(v) => setServiceForm({ ...serviceForm, tagline: v })} />
                     <TextareaField label="Full Description" value={serviceForm.description} onChange={(v) => setServiceForm({ ...serviceForm, description: v })} />
                     <ImageUpload label="Hero Image" value={serviceForm.heroImage} onChange={(v) => setServiceForm({ ...serviceForm, heroImage: v })} />
+                    <IconPicker label="Service Icon" value={serviceForm.icon} onChange={(v) => setServiceForm({ ...serviceForm, icon: v })} />
 
                     <ArraySection label="Features" items={serviceForm.features}
                       renderItem={(item, i) => (
@@ -354,8 +522,8 @@ const Admin = () => {
                       onRemove={(i) => setServiceForm({ ...serviceForm, faqs: serviceForm.faqs.filter((_, idx) => idx !== i) })}
                     />
 
-                    <button onClick={saveService} className="w-full h-11 rounded-lg gradient-bg text-accent-foreground font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-                      <Save size={16} /> {editingServiceId ? "Update Service" : "Add Service"}
+                    <button disabled={isSaving} onClick={saveService} className="w-full h-11 rounded-lg gradient-bg text-accent-foreground font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60">
+                      <Save size={16} /> {isSaving ? "Saving..." : editingServiceId ? "Update Service" : "Add Service"}
                     </button>
                   </div>
                 </FormModal>
@@ -381,7 +549,7 @@ const Admin = () => {
                 <p className="col-span-full text-center text-muted-foreground py-12">No creators added yet.</p>
               )}
               {creators.map((c) => (
-                <div key={c.id} className="bg-card border border-border rounded-xl overflow-hidden">
+                <div key={c._id} className="bg-card border border-border rounded-xl overflow-hidden">
                   <div className={`h-24 bg-gradient-to-br ${c.color} flex items-center justify-center`}>
                     {c.image ? (
                       <img src={c.image} alt={c.name} className="w-14 h-14 rounded-full object-cover border-2 border-accent-foreground/30" />
@@ -396,7 +564,7 @@ const Admin = () => {
                     <p className="text-xs text-muted-foreground">{c.category} · {c.followers} followers · {c.price}</p>
                     <div className="flex gap-2 mt-3">
                       <button onClick={() => editCreator(c)} className="flex-1 text-xs py-2 rounded-lg bg-secondary text-foreground hover:bg-secondary/80 font-medium transition-colors">Edit</button>
-                      <button onClick={() => openDeleteDialog("creator", c.id, c.name)} className="text-xs py-2 px-3 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
+                      <button onClick={() => openDeleteDialog("creator", c._id, c.name)} className="text-xs py-2 px-3 rounded-lg hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors">
                         <Trash2 size={14} />
                       </button>
                     </div>
@@ -407,7 +575,7 @@ const Admin = () => {
 
             <AnimatePresence>
               {showCreatorForm && (
-                <FormModal title={editingCreatorId ? "Edit Creator" : "Add Creator"} onClose={() => { setShowCreatorForm(false); setEditingCreatorId(null); }}>
+                <FormModal title={editingCreatorId ? "Edit Creator" : "Add Creator"} onClose={closeCreatorForm}>
                   <div className="space-y-4">
                     <InputField label="Name" value={creatorForm.name} onChange={(v) => setCreatorForm({ ...creatorForm, name: v })} />
                     <InputField label="Category" value={creatorForm.category} onChange={(v) => setCreatorForm({ ...creatorForm, category: v })} placeholder="e.g. Tech Reviewer" />
@@ -429,8 +597,8 @@ const Admin = () => {
                         ))}
                       </div>
                     </div>
-                    <button onClick={saveCreator} className="w-full h-11 rounded-lg gradient-bg text-accent-foreground font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-                      <Save size={16} /> {editingCreatorId ? "Update Creator" : "Add Creator"}
+                    <button disabled={isSaving} onClick={saveCreator} className="w-full h-11 rounded-lg gradient-bg text-accent-foreground font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60">
+                      <Save size={16} /> {isSaving ? "Saving..." : editingCreatorId ? "Update Creator" : "Add Creator"}
                     </button>
                   </div>
                 </FormModal>
@@ -456,7 +624,7 @@ const Admin = () => {
                 <p className="text-center text-muted-foreground py-12">No projects added yet.</p>
               )}
               {projects.map((p) => (
-                <div key={p.id} className="bg-card border border-border rounded-xl p-5 flex items-center justify-between">
+                <div key={p._id} className="bg-card border border-border rounded-xl p-5 flex items-center justify-between">
                   <div className="flex items-center gap-4">
                     {p.img && (
                       <img src={p.img} alt={p.title} className="w-14 h-14 rounded-lg object-cover" />
@@ -470,7 +638,7 @@ const Admin = () => {
                     <button onClick={() => editProject(p)} className="p-2 rounded-lg hover:bg-secondary transition-colors text-muted-foreground hover:text-foreground">
                       <Edit2 size={16} />
                     </button>
-                    <button onClick={() => openDeleteDialog("project", p.id, p.title)} className="p-2 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive">
+                    <button onClick={() => openDeleteDialog("project", p._id, p.title)} className="p-2 rounded-lg hover:bg-destructive/10 transition-colors text-muted-foreground hover:text-destructive">
                       <Trash2 size={16} />
                     </button>
                   </div>
@@ -480,7 +648,7 @@ const Admin = () => {
 
             <AnimatePresence>
               {showProjectForm && (
-                <FormModal title={editingProjectId ? "Edit Project" : "Add Project"} onClose={() => { setShowProjectForm(false); setEditingProjectId(null); }}>
+                <FormModal title={editingProjectId ? "Edit Project" : "Add Project"} onClose={closeProjectForm}>
                   <div className="space-y-4">
                     <InputField label="Project Title" value={projectForm.title} onChange={(v) => setProjectForm({ ...projectForm, title: v })} />
                     <div className="grid grid-cols-2 gap-4">
@@ -536,8 +704,188 @@ const Admin = () => {
                       </div>
                     </div>
 
-                    <button onClick={saveProject} className="w-full h-11 rounded-lg gradient-bg text-accent-foreground font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2">
-                      <Save size={16} /> {editingProjectId ? "Update Project" : "Add Project"}
+                    <button disabled={isSaving} onClick={saveProject} className="w-full h-11 rounded-lg gradient-bg text-accent-foreground font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60">
+                      <Save size={16} /> {isSaving ? "Saving..." : editingProjectId ? "Update Project" : "Add Project"}
+                    </button>
+                  </div>
+                </FormModal>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* ─── Settings Tab ─── */}
+        {tab === "settings" && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-heading text-lg font-bold text-foreground">Site Settings</h2>
+              <button
+                onClick={editSettings}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg gradient-bg text-accent-foreground text-sm font-bold hover:opacity-90 transition-opacity">
+                <Edit2 size={16} /> Edit Settings
+              </button>
+            </div>
+
+            {settings && (
+              <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Email</label>
+                  <p className="text-foreground font-medium">{settings.email}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Phone</label>
+                  <p className="text-foreground font-medium">{settings.phone}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Location</label>
+                  <p className="text-foreground font-medium">{settings.location}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">WhatsApp Number</label>
+                  <p className="text-foreground font-medium">{settings.whatsappNumber}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground mb-3 block">Social Links</label>
+                  <div className="space-y-2">
+                    {settings.socials.map((social, i) => (
+                      <div key={i} className="flex items-center gap-4 p-3 bg-secondary rounded-lg">
+                        <div className="flex-1">
+                          <p className="font-medium text-foreground">{social.name}</p>
+                          <p className="text-sm text-muted-foreground">{social.url}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <AnimatePresence>
+              {showSettingsForm && (
+                <FormModal title="Edit Settings" onClose={closeSettingsForm}>
+                  <div className="space-y-4">
+                    <InputField label="Email" value={settingsForm.email} onChange={(v) => setSettingsForm({ ...settingsForm, email: v })} />
+                    <InputField label="Phone" value={settingsForm.phone} onChange={(v) => setSettingsForm({ ...settingsForm, phone: v })} />
+                    <InputField label="Location" value={settingsForm.location} onChange={(v) => setSettingsForm({ ...settingsForm, location: v })} />
+                    <InputField label="WhatsApp Number" value={settingsForm.whatsappNumber} onChange={(v) => setSettingsForm({ ...settingsForm, whatsappNumber: v })} />
+
+                    <ArraySection label="Social Links" items={settingsForm.socials}
+                      renderItem={(item, i) => (
+                        <div className="grid grid-cols-3 gap-2">
+                          <input className="input-admin" placeholder="Name" value={item.name} onChange={(e) => {
+                            const s = [...settingsForm.socials]; s[i] = { ...s[i], name: e.target.value }; setSettingsForm({ ...settingsForm, socials: s });
+                          }} />
+                          <input className="input-admin" placeholder="URL" value={item.url} onChange={(e) => {
+                            const s = [...settingsForm.socials]; s[i] = { ...s[i], url: e.target.value }; setSettingsForm({ ...settingsForm, socials: s });
+                          }} />
+                          <input className="input-admin" placeholder="Icon" value={item.icon} onChange={(e) => {
+                            const s = [...settingsForm.socials]; s[i] = { ...s[i], icon: e.target.value }; setSettingsForm({ ...settingsForm, socials: s });
+                          }} />
+                        </div>
+                      )}
+                      onAdd={() => setSettingsForm({ ...settingsForm, socials: [...settingsForm.socials, { name: "", url: "", icon: "" }] })}
+                      onRemove={(i) => setSettingsForm({ ...settingsForm, socials: settingsForm.socials.filter((_, idx) => idx !== i) })}
+                    />
+
+                    <button disabled={isSaving} onClick={saveSettings} className="w-full h-11 rounded-lg gradient-bg text-accent-foreground font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60">
+                      <Save size={16} /> {isSaving ? "Saving..." : "Save Settings"}
+                    </button>
+                  </div>
+                </FormModal>
+              )}
+            </AnimatePresence>
+          </div>
+        )}
+
+        {/* ─── About Tab ─── */}
+        {tab === "about" && (
+          <div>
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="font-heading text-lg font-bold text-foreground">About Page Content</h2>
+              <button
+                onClick={editAbout}
+                className="flex items-center gap-2 px-4 py-2 rounded-lg gradient-bg text-accent-foreground text-sm font-bold hover:opacity-90 transition-opacity">
+                <Edit2 size={16} /> Edit About
+              </button>
+            </div>
+
+            {about && (
+              <div className="bg-card border border-border rounded-xl p-6 space-y-4">
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Hero Title</label>
+                  <p className="text-foreground font-medium">{about.heroTitle}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Story Title</label>
+                  <p className="text-foreground font-medium">{about.storyTitle}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Values Title</label>
+                  <p className="text-foreground font-medium">{about.valuesTitle}</p>
+                </div>
+                <div>
+                  <label className="text-sm font-medium text-muted-foreground">Team Title</label>
+                  <p className="text-foreground font-medium">{about.teamTitle}</p>
+                </div>
+              </div>
+            )}
+
+            <AnimatePresence>
+              {showAboutForm && (
+                <FormModal title="Edit About Page" onClose={closeAboutForm}>
+                  <div className="space-y-4">
+                    <InputField label="Hero Title" value={aboutForm.heroTitle} onChange={(v) => setAboutForm({ ...aboutForm, heroTitle: v })} />
+                    <TextareaField label="Hero Description" value={aboutForm.heroDescription} onChange={(v) => setAboutForm({ ...aboutForm, heroDescription: v })} />
+
+                    <ArraySection label="Stats" items={aboutForm.stats}
+                      renderItem={(item, i) => (
+                        <div className="grid grid-cols-2 gap-2">
+                          <input className="input-admin" placeholder="Value (e.g., 50+)" value={item.value} onChange={(e) => {
+                            const s = [...aboutForm.stats]; s[i] = { ...s[i], value: e.target.value }; setAboutForm({ ...aboutForm, stats: s });
+                          }} />
+                          <input className="input-admin" placeholder="Label (e.g., Happy Clients)" value={item.label} onChange={(e) => {
+                            const s = [...aboutForm.stats]; s[i] = { ...s[i], label: e.target.value }; setAboutForm({ ...aboutForm, stats: s });
+                          }} />
+                        </div>
+                      )}
+                      onAdd={() => setAboutForm({ ...aboutForm, stats: [...aboutForm.stats, { value: "", label: "" }] })}
+                      onRemove={(i) => setAboutForm({ ...aboutForm, stats: aboutForm.stats.filter((_, idx) => idx !== i) })}
+                    />
+
+                    <InputField label="Story Title" value={aboutForm.storyTitle} onChange={(v) => setAboutForm({ ...aboutForm, storyTitle: v })} />
+
+                    <ArraySection label="Story Content" items={aboutForm.storyContent}
+                      renderItem={(item, i) => (
+                        <input className="input-admin" placeholder="Paragraph text" value={item} onChange={(e) => {
+                          const c = [...aboutForm.storyContent]; c[i] = e.target.value; setAboutForm({ ...aboutForm, storyContent: c });
+                        }} />
+                      )}
+                      onAdd={() => setAboutForm({ ...aboutForm, storyContent: [...aboutForm.storyContent, ""] })}
+                      onRemove={(i) => setAboutForm({ ...aboutForm, storyContent: aboutForm.storyContent.filter((_, idx) => idx !== i) })}
+                    />
+
+                    <InputField label="Values Title" value={aboutForm.valuesTitle} onChange={(v) => setAboutForm({ ...aboutForm, valuesTitle: v })} />
+
+                    <ArraySection label="Values" items={aboutForm.values}
+                      renderItem={(item, i) => (
+                        <div className="grid grid-cols-2 gap-2">
+                          <input className="input-admin" placeholder="Value title (e.g., Excellence)" value={item.title} onChange={(e) => {
+                            const v = [...aboutForm.values]; v[i] = { ...v[i], title: e.target.value }; setAboutForm({ ...aboutForm, values: v });
+                          }} />
+                          <input className="input-admin" placeholder="Value description" value={item.description} onChange={(e) => {
+                            const v = [...aboutForm.values]; v[i] = { ...v[i], description: e.target.value }; setAboutForm({ ...aboutForm, values: v });
+                          }} />
+                        </div>
+                      )}
+                      onAdd={() => setAboutForm({ ...aboutForm, values: [...aboutForm.values, { title: "", description: "" }] })}
+                      onRemove={(i) => setAboutForm({ ...aboutForm, values: aboutForm.values.filter((_, idx) => idx !== i) })}
+                    />
+
+                    <InputField label="Team Title" value={aboutForm.teamTitle} onChange={(v) => setAboutForm({ ...aboutForm, teamTitle: v })} />
+                    <TextareaField label="Team Description" value={aboutForm.teamDescription} onChange={(v) => setAboutForm({ ...aboutForm, teamDescription: v })} />
+
+                    <button disabled={isSaving} onClick={saveAbout} className="w-full h-11 rounded-lg gradient-bg text-accent-foreground font-bold text-sm hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-60">
+                      <Save size={16} /> {isSaving ? "Saving..." : "Save About Page"}
                     </button>
                   </div>
                 </FormModal>

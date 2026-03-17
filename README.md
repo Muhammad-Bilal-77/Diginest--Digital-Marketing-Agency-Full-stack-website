@@ -1,4 +1,4 @@
-# NexusMedia Website
+# Digi nest Website
 
 Marketing agency website built with Vite, React, TypeScript, and Tailwind CSS.
 
@@ -16,6 +16,52 @@ Marketing agency website built with Vite, React, TypeScript, and Tailwind CSS.
 npm install
 npm run dev
 ```
+
+## Backend (Node.js + MongoDB Atlas + Cloudinary)
+
+The project now includes a backend in `server/` for:
+
+- Admin authentication (`/api/auth/login`)
+- CRUD for services, creators, and projects (`/api/services`, `/api/creators`, `/api/projects`)
+- Image upload to Cloudinary (`/api/upload/image`)
+
+### 1. Install backend dependencies
+
+```sh
+npm --prefix server install
+```
+
+### 2. Configure backend environment
+
+Create `server/.env` from `server/.env.example` and set your real values:
+
+- `MONGODB_URI` (MongoDB Atlas connection string)
+- `JWT_SECRET`
+- `ADMIN_USERNAME`
+- `ADMIN_PASSWORD`
+- `CLOUDINARY_CLOUD_NAME`
+- `CLOUDINARY_API_KEY`
+- `CLOUDINARY_API_SECRET`
+
+### 3. Run backend
+
+```sh
+npm run dev:server
+```
+
+### 4. Run frontend
+
+```sh
+npm run dev
+```
+
+Vite is configured to proxy `/api` to `http://localhost:5000` during local development.
+
+## Notes
+
+- Homepage remains static right now.
+- Admin panel (`/admin-login`, `/admin`) is now dynamic and stores data in MongoDB.
+- Public read endpoints are ready so homepage sections can be switched to dynamic data later without backend changes.
 
 ## Build
 

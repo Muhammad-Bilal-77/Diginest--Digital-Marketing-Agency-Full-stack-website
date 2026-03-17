@@ -39,7 +39,7 @@ const AboutSection = () => {
               Building Digital <span className="gradient-text">Excellence</span>
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-8">
-              Founded with a passion for digital innovation, NexusMedia has grown from a small startup into a 
+              Founded with a passion for digital innovation, Digi nest has grown from a small startup into a 
               globally recognized agency. We combine creativity with data to deliver campaigns that not only 
               look stunning but also drive measurable business growth for our clients.
             </p>

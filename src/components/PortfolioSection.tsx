@@ -1,133 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { ArrowUpRight, Eye, X, CheckCircle2, TrendingUp, Users, BarChart3, ExternalLink } from "lucide-react";
-import portfolio1 from "@/assets/portfolio-1.jpg";
-import portfolio2 from "@/assets/portfolio-2.jpg";
-import portfolio3 from "@/assets/portfolio-3.jpg";
-import portfolio4 from "@/assets/portfolio-4.jpg";
-import portfolio5 from "@/assets/portfolio-5.jpg";
-import portfolio6 from "@/assets/portfolio-6.jpg";
-
-const filters = ["All", "Web Design", "Branding", "SEO", "Marketing"];
-
-const projects = [
-  {
-    title: "Luxury Fashion E-Commerce",
-    cat: "Web Design",
-    img: portfolio1,
-    desc: "Premium online store with 180% conversion lift",
-    client: "Maison Élégance",
-    duration: "12 Weeks",
-    year: "2024",
-    challenge: "Maison Élégance needed a complete digital overhaul to match their ultra-premium in-store experience. Their existing e-commerce platform suffered from slow load times, outdated design, and a 2.1% conversion rate far below industry standards.",
-    solution: "We designed and developed a bespoke e-commerce platform with cinematic product showcases, AI-powered size recommendations, and a seamless checkout experience. Every micro-interaction was carefully crafted to evoke luxury.",
-    results: [
-      { label: "Conversion Rate", value: "+180%", icon: TrendingUp },
-      { label: "Avg. Order Value", value: "+65%", icon: BarChart3 },
-      { label: "Page Load Speed", value: "0.8s", icon: CheckCircle2 },
-      { label: "Monthly Visitors", value: "420K+", icon: Users },
-    ],
-    deliverables: ["Custom Shopify Plus Theme", "Mobile-First UX Design", "AI Size Recommendation Engine", "Performance Optimization", "A/B Testing Framework"],
-    testimonial: { text: "NexusMedia transformed our online presence entirely. Sales have never been higher.", author: "Claire Dubois", role: "CEO, Maison Élégance" },
-  },
-  {
-    title: "Corporate Identity Suite",
-    cat: "Branding",
-    img: portfolio2,
-    desc: "Gold-standard brand system for Fortune 500",
-    client: "Vertex Holdings",
-    duration: "8 Weeks",
-    year: "2024",
-    challenge: "Vertex Holdings, a Fortune 500 conglomerate, had inconsistent branding across 14 subsidiaries. They needed a unified identity system that conveyed trust, innovation, and global authority.",
-    solution: "We developed a comprehensive brand architecture with a modular identity system, custom typography, and a 200-page brand guidelines document. The system scales across digital, print, and environmental applications.",
-    results: [
-      { label: "Brand Recognition", value: "+240%", icon: TrendingUp },
-      { label: "Brand Consistency", value: "98%", icon: CheckCircle2 },
-      { label: "Subsidiaries Unified", value: "14", icon: Users },
-      { label: "Assets Created", value: "2,400+", icon: BarChart3 },
-    ],
-    deliverables: ["Brand Strategy & Architecture", "Logo System & Typography", "200-Page Brand Guidelines", "Digital Asset Library", "Environmental Design Templates"],
-    testimonial: { text: "Finally, our global brand speaks with one voice. The impact on stakeholder confidence has been immeasurable.", author: "Robert Chen", role: "CMO, Vertex Holdings" },
-  },
-  {
-    title: "Viral Content Campaign",
-    cat: "Marketing",
-    img: portfolio3,
-    desc: "12M+ impressions in 30 days across platforms",
-    client: "FreshBite Foods",
-    duration: "6 Weeks",
-    year: "2023",
-    challenge: "FreshBite Foods was launching a new product line and needed massive awareness in a saturated health food market. Traditional advertising wasn't cutting through the noise with their Gen-Z target audience.",
-    solution: "We crafted a multi-platform content strategy leveraging micro-influencers, UGC challenges, and real-time social listening. Our team produced 180+ content pieces optimized for TikTok, Instagram Reels, and YouTube Shorts.",
-    results: [
-      { label: "Total Impressions", value: "12M+", icon: TrendingUp },
-      { label: "Engagement Rate", value: "8.7%", icon: BarChart3 },
-      { label: "UGC Submissions", value: "3,200+", icon: Users },
-      { label: "Sales Increase", value: "+340%", icon: CheckCircle2 },
-    ],
-    deliverables: ["Content Strategy Blueprint", "180+ Video Assets", "Influencer Partnership Program", "UGC Campaign Management", "Real-Time Analytics Dashboard"],
-    testimonial: { text: "We went from unknown to trending in under a month. NexusMedia's creativity is unmatched.", author: "Mia Torres", role: "Marketing Director, FreshBite" },
-  },
-  {
-    title: "Enterprise SEO Overhaul",
-    cat: "SEO",
-    img: portfolio4,
-    desc: "From page 5 to #1 rankings in 90 days",
-    client: "LegalShield Pro",
-    duration: "16 Weeks",
-    year: "2024",
-    challenge: "LegalShield Pro, a B2B legal tech SaaS, was invisible in search results. With 50+ competitors ranking above them for critical keywords, their organic pipeline had completely dried up.",
-    solution: "We executed a full technical SEO audit, rebuilt their site architecture, created 85 pieces of authoritative content, and built a white-hat backlink portfolio from 120+ high-DA domains.",
-    results: [
-      { label: "Keywords in Top 3", value: "47", icon: TrendingUp },
-      { label: "Organic Traffic", value: "+580%", icon: BarChart3 },
-      { label: "Domain Authority", value: "62→81", icon: CheckCircle2 },
-      { label: "Organic Leads/Mo", value: "1,200+", icon: Users },
-    ],
-    deliverables: ["Technical SEO Audit & Fixes", "Site Architecture Redesign", "85 Long-Form Content Pieces", "Link Building Campaign", "Monthly Performance Reports"],
-    testimonial: { text: "Our organic pipeline went from zero to our #1 revenue channel. The ROI is staggering.", author: "David Park", role: "VP Growth, LegalShield Pro" },
-  },
-  {
-    title: "Fintech Super App",
-    cat: "Web Design",
-    img: portfolio5,
-    desc: "Award-winning mobile banking experience",
-    client: "NovaPay",
-    duration: "20 Weeks",
-    year: "2023",
-    challenge: "NovaPay needed to consolidate 5 separate financial products into a single, intuitive super app. The challenge was making complex financial tools feel simple and trustworthy for everyday users.",
-    solution: "We designed a unified mobile experience with biometric authentication, smart dashboards, and contextual financial insights. The interface uses progressive disclosure to reveal complexity only when users need it.",
-    results: [
-      { label: "App Store Rating", value: "4.9★", icon: TrendingUp },
-      { label: "Daily Active Users", value: "890K", icon: Users },
-      { label: "Task Completion", value: "94%", icon: CheckCircle2 },
-      { label: "Support Tickets", value: "-72%", icon: BarChart3 },
-    ],
-    deliverables: ["UX Research & User Testing", "Design System & Components", "iOS & Android Prototypes", "Accessibility Audit (WCAG 2.1)", "Developer Handoff Package"],
-    testimonial: { text: "Users love it. We won a Webby Award within 6 months of launch. NexusMedia delivered magic.", author: "Aisha Rahman", role: "CPO, NovaPay" },
-  },
-  {
-    title: "Omnichannel Ad Campaign",
-    cat: "Marketing",
-    img: portfolio6,
-    desc: "4.2x ROAS across Google & Meta platforms",
-    client: "UrbanNest Furniture",
-    duration: "10 Weeks",
-    year: "2024",
-    challenge: "UrbanNest Furniture was spending $80K/month on ads with a 1.1x ROAS — barely breaking even. They needed to dramatically improve efficiency while scaling spend to capture seasonal demand.",
-    solution: "We restructured their entire paid media strategy with advanced audience segmentation, dynamic creative optimization, and a full-funnel attribution model. Our AI-powered bid management system optimized in real-time.",
-    results: [
-      { label: "ROAS", value: "4.2x", icon: TrendingUp },
-      { label: "Cost Per Acquisition", value: "-58%", icon: BarChart3 },
-      { label: "Ad Spend Managed", value: "$1.2M", icon: CheckCircle2 },
-      { label: "Revenue Generated", value: "$5M+", icon: Users },
-    ],
-    deliverables: ["Paid Media Strategy", "Creative Asset Production", "Audience Segmentation Model", "Real-Time Bid Management", "Weekly Performance Reports"],
-    testimonial: { text: "Our ad spend finally makes sense. NexusMedia turned our biggest cost center into our growth engine.", author: "James Liu", role: "Founder, UrbanNest" },
-  },
-];
+import { ArrowUpRight, Eye, X, CheckCircle2, TrendingUp, Users, BarChart3 } from "lucide-react";
 
 interface Project {
+  _id: string;
   title: string;
   cat: string;
   img: string;
@@ -137,15 +13,82 @@ interface Project {
   year: string;
   challenge: string;
   solution: string;
-  results: { label: string; value: string; icon: React.ElementType }[];
+  results: { label: string; value: string }[];
   deliverables: string[];
   testimonial: { text: string; author: string; role: string };
 }
 
+const getIconForResult = (label: string) => {
+  const iconMap: Record<string, React.ElementType> = {
+    "Conversion Rate": TrendingUp,
+    "Avg. Order Value": BarChart3,
+    "Monthly Visitors": Users,
+    "Brand Recognition": TrendingUp,
+    "Subsidiaries Unified": Users,
+    "Assets Created": BarChart3,
+    "Total Impressions": TrendingUp,
+    "Engagement Rate": BarChart3,
+    "UGC Submissions": Users,
+    "Sales Increase": TrendingUp,
+    "Keywords in Top 3": TrendingUp,
+    "Organic Traffic": BarChart3,
+    "Organic Leads/Mo": Users,
+    "App Store Rating": TrendingUp,
+    "Daily Active Users": Users,
+    "Task Completion": CheckCircle2,
+    "Support Tickets": BarChart3,
+    ROAS: TrendingUp,
+    "Cost Per Acquisition": BarChart3,
+    "Ad Spend Managed": Users,
+    "Revenue Generated": TrendingUp,
+  };
+  return iconMap[label] || TrendingUp;
+};
+
 const PortfolioSection = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
   const [active, setActive] = useState("All");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const response = await fetch("/api/projects");
+        const data = await response.json();
+        setProjects(data);
+      } catch (error) {
+        console.error("Failed to fetch projects:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  const filters = ["All", ...new Set(projects.map((p) => p.cat))];
   const filtered = active === "All" ? projects : projects.filter((p) => p.cat === active);
+
+  if (loading) {
+    return (
+      <section id="portfolio" className="section-padding bg-secondary/50">
+        <div className="container-wide">
+          <div className="text-center mb-14">
+            <p className="text-sm font-semibold gradient-text uppercase tracking-widest mb-3">Our Work</p>
+            <h2 className="font-heading text-3xl lg:text-5xl font-extrabold text-foreground mb-4">
+              Creative <span className="gradient-text">Portfolio</span>
+            </h2>
+          </div>
+          <div className="columns-1 sm:columns-2 lg:columns-3 gap-5 space-y-5">
+            {[1, 2, 3, 4, 5, 6].map((i) => (
+              <div key={i} className="bg-card border border-border rounded-2xl h-64 animate-pulse break-inside-avoid" />
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
 
   return (
     <>
@@ -188,7 +131,7 @@ const PortfolioSection = () => {
             <AnimatePresence mode="popLayout">
               {filtered.map((p, i) => (
                 <motion.div
-                  key={p.title}
+                  key={p._id || p.title}
                   layout
                   initial={{ opacity: 0, scale: 0.92 }}
                   animate={{ opacity: 1, scale: 1 }}
@@ -202,7 +145,7 @@ const PortfolioSection = () => {
                     <img
                       src={p.img}
                       alt={p.title}
-                      className="w-full object-cover transition-transform duration-700 ease-out group-hover:scale-110"
+                      className="w-full h-64 object-cover transition-transform duration-700 ease-out group-hover:scale-110"
                     />
                     {/* Overlay */}
                     <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/40 to-transparent opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col justify-end p-6">
@@ -313,19 +256,22 @@ const PortfolioSection = () => {
 
                 {/* Results grid */}
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-                  {selectedProject.results.map((r, i) => (
-                    <motion.div
-                      key={r.label}
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: 0.2 + i * 0.1 }}
-                      className="rounded-2xl gradient-bg-subtle border border-border p-5 text-center"
-                    >
-                      <r.icon size={20} className="mx-auto mb-2 text-accent" />
-                      <p className="font-heading text-2xl font-extrabold gradient-text">{r.value}</p>
-                      <p className="text-xs text-muted-foreground mt-1">{r.label}</p>
-                    </motion.div>
-                  ))}
+                  {selectedProject.results.map((r, i) => {
+                    const Icon = getIconForResult(r.label);
+                    return (
+                      <motion.div
+                        key={r.label}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.2 + i * 0.1 }}
+                        className="rounded-2xl gradient-bg-subtle border border-border p-5 text-center"
+                      >
+                        <Icon size={20} className="mx-auto mb-2 text-accent" />
+                        <p className="font-heading text-2xl font-extrabold gradient-text">{r.value}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{r.label}</p>
+                      </motion.div>
+                    );
+                  })}
                 </div>
 
                 {/* Challenge & Solution */}
@@ -375,7 +321,7 @@ const PortfolioSection = () => {
                     rel="noopener noreferrer"
                     className="gradient-bg text-accent-foreground px-8 py-3.5 rounded-xl text-sm font-bold text-center hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"
                   >
-                    Start a Similar Project <ExternalLink size={14} />
+                    Start a Similar Project <ArrowUpRight size={14} />
                   </a>
                   <button
                     onClick={() => setSelectedProject(null)}

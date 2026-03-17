@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Lock, Eye, EyeOff, AlertCircle } from "lucide-react";
-import { adminAuth } from "@/lib/adminStore";
+import { adminAuth } from "@/lib/adminApi";
 
 const AdminLogin = () => {
   const [username, setUsername] = useState("");
@@ -11,12 +11,18 @@ const AdminLogin = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (adminAuth.login(username, password)) {
+    setIsSubmitting(true);
+    try {
+      await adminAuth.login(username, password);
       navigate("/admin");
-    } else {
+    } catch {
       setError("Invalid credentials");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -80,9 +86,10 @@ const AdminLogin = () => {
 
           <button
             type="submit"
+            disabled={isSubmitting}
             className="w-full h-11 rounded-lg gradient-bg text-accent-foreground font-bold text-sm hover:opacity-90 transition-opacity"
           >
-            Sign In
+            {isSubmitting ? "Signing In..." : "Sign In"}
           </button>
         </form>
       </motion.div>

@@ -1,5 +1,6 @@
 import { useRef } from "react";
 import { Upload, X, Image } from "lucide-react";
+import { uploadImage } from "@/lib/adminApi";
 
 interface ImageUploadProps {
   value: string;
@@ -10,18 +11,24 @@ interface ImageUploadProps {
 const ImageUpload = ({ value, onChange, label }: ImageUploadProps) => {
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (file.size > 2 * 1024 * 1024) {
-      alert("Image must be under 2MB for localStorage storage.");
+      alert("Image must be under 2MB.");
       return;
     }
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      onChange(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+
+    try {
+      const imageUrl = await uploadImage(file);
+      onChange(imageUrl);
+    } catch (error) {
+      alert(error instanceof Error ? error.message : "Image upload failed");
+    } finally {
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
+    }
   };
 
   return (

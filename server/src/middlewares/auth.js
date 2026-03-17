@@ -1,0 +1,19 @@
+import jwt from "jsonwebtoken";
+import { env } from "../config/env.js";
+
+export function requireAuth(req, res, next) {
+  const authHeader = req.headers.authorization;
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Unauthorized" });
+  }
+
+  const token = authHeader.replace("Bearer ", "").trim();
+
+  try {
+    const payload = jwt.verify(token, env.jwtSecret);
+    req.user = payload;
+    return next();
+  } catch {
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
+}

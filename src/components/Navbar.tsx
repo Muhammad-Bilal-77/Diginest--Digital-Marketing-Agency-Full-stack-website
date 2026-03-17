@@ -1,27 +1,44 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X } from "lucide-react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import ProposalDialog from "./ProposalDialog";
 
 const navLinks = [
-  { label: "Services", href: "#services" },
-  { label: "About", href: "#about" },
-  { label: "Portfolio", href: "#portfolio" },
-  { label: "Creators", href: "#creators" },
-  { label: "Testimonials", href: "#testimonials" },
-  { label: "Process", href: "#process" },
+  { label: "Services", href: "#services", isExternal: true },
+  { label: "About", href: "/about", isExternal: false },
+  { label: "Portfolio", href: "#portfolio", isExternal: true },
+  { label: "Creators", href: "#creators", isExternal: true },
+  { label: "Testimonials", href: "#testimonials", isExternal: true },
+  { label: "Process", href: "#process", isExternal: true },
 ];
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
     window.addEventListener("scroll", onScroll);
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
+
+  const handleHashLink = (href: string) => {
+    setMobileOpen(false);
+    if (location.pathname === "/") {
+      // Already on home page, just scroll to section
+      const element = document.querySelector(href);
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth" });
+      }
+    } else {
+      // Not on home page, navigate to home with hash
+      navigate(`/${href}`);
+    }
+  };
 
   return (
     <>
@@ -35,15 +52,22 @@ const Navbar = () => {
       >
         <div className="container-wide flex items-center justify-between h-16 lg:h-20 px-4 sm:px-6 lg:px-8">
           <a href="#" className="font-heading font-extrabold text-xl lg:text-2xl tracking-tight text-foreground">
-            Nexus<span className="gradient-text">Media</span>
+            Digi<span className="gradient-text">nest</span>
           </a>
 
           <div className="hidden lg:flex items-center gap-8">
             {navLinks.map((link) => (
-              <a key={link.href} href={link.href}
-                className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200">
-                {link.label}
-              </a>
+              link.isExternal ? (
+                <button key={link.href} onClick={() => handleHashLink(link.href)}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200">
+                  {link.label}
+                </button>
+              ) : (
+                <Link key={link.href} to={link.href}
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors duration-200">
+                  {link.label}
+                </Link>
+              )
             ))}
           </div>
 
@@ -69,10 +93,17 @@ const Navbar = () => {
             >
               <div className="px-4 py-6 space-y-4">
                 {navLinks.map((link) => (
-                  <a key={link.href} href={link.href} onClick={() => setMobileOpen(false)}
-                    className="block text-sm font-medium text-muted-foreground hover:text-foreground">
-                    {link.label}
-                  </a>
+                  link.isExternal ? (
+                    <button key={link.href} onClick={() => handleHashLink(link.href)}
+                      className="block w-full text-left text-sm font-medium text-muted-foreground hover:text-foreground">
+                      {link.label}
+                    </button>
+                  ) : (
+                    <Link key={link.href} to={link.href} onClick={() => setMobileOpen(false)}
+                      className="block text-sm font-medium text-muted-foreground hover:text-foreground">
+                      {link.label}
+                    </Link>
+                  )
                 ))}
                 <button onClick={() => { setMobileOpen(false); setDialogOpen(true); }}
                   className="block w-full gradient-bg text-accent-foreground px-6 py-2.5 rounded-lg text-sm font-semibold text-center">
