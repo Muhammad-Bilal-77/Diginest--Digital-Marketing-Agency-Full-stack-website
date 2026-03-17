@@ -50,21 +50,29 @@ const PortfolioSection = () => {
   const [loading, setLoading] = useState(true);
   const [active, setActive] = useState("All");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const [whatsappNumber, setWhatsappNumber] = useState("");
 
   useEffect(() => {
-    const fetchProjects = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch("/api/projects");
-        const data = await response.json();
-        setProjects(data);
+        const [projectsRes, settingsRes] = await Promise.all([
+          fetch("/api/projects"),
+          fetch("/api/settings"),
+        ]);
+
+        const projectsData = await projectsRes.json();
+        const settingsData = await settingsRes.json();
+        
+        setProjects(projectsData);
+        setWhatsappNumber(settingsData.whatsappNumber || "");
       } catch (error) {
-        console.error("Failed to fetch projects:", error);
+        console.error("Failed to fetch data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProjects();
+    fetchData();
   }, []);
 
   const filters = ["All", ...new Set(projects.map((p) => p.cat))];
@@ -316,7 +324,7 @@ const PortfolioSection = () => {
                 {/* CTA */}
                 <div className="flex flex-col sm:flex-row gap-4 pt-2">
                   <a
-                    href="https://wa.me/923104833310?text=Hi!%20I%20saw%20your%20portfolio%20and%20I'd%20love%20to%20discuss%20a%20project."
+                    href={`https://wa.me/${whatsappNumber.replace(/[^\d+]/g, "")}?text=Hi!%20I%20saw%20your%20portfolio%20and%20I'd%20love%20to%20discuss%20a%20project.`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="gradient-bg text-accent-foreground px-8 py-3.5 rounded-xl text-sm font-bold text-center hover:opacity-90 transition-opacity inline-flex items-center justify-center gap-2"

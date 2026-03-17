@@ -1,22 +1,71 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
-import { ArrowLeft, Send, User, Briefcase, DollarSign, MessageSquare } from "lucide-react";
+import { ArrowLeft, Send, User, Briefcase, DollarSign, MessageSquare, Users } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const budgetOptions = ["$500 - $1,000", "$1,000 - $3,000", "$3,000 - $5,000", "$5,000+"];
 const serviceOptions = ["Web Design", "Digital Marketing", "SEO Optimization", "Social Media Marketing", "Branding & Graphic Design", "Paid Advertising", "Influencer Marketing"];
 
+interface Creator {
+  _id: string;
+  name: string;
+  category: string;
+  followers: string;
+  price: string;
+  color: string;
+  image?: string;
+}
+
 const HireNow = () => {
+  const [creators, setCreators] = useState<Creator[]>([]);
+  const [creatorLoading, setCreatorLoading] = useState(true);
+  const [selectedCreatorId, setSelectedCreatorId] = useState("");
   const [name, setName] = useState("");
   const [service, setService] = useState("");
   const [budget, setBudget] = useState("");
+  const [customBudget, setCustomBudget] = useState("");
   const [message, setMessage] = useState("");
+  const [whatsappNumber, setWhatsappNumber] = useState("");
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const [creatorsRes, settingsRes] = await Promise.all([
+          fetch("/api/creators"),
+          fetch("/api/settings"),
+        ]);
+        
+        const creatorsData = await creatorsRes.json();
+        const settingsData = await settingsRes.json();
+        
+        setCreators(creatorsData);
+        setWhatsappNumber(settingsData.whatsappNumber || "");
+        setCreatorLoading(false);
+      } catch (error) {
+        console.error("Failed to fetch data:", error);
+        setCreatorLoading(false);
+      }
+    };
+
+    fetchData();
+  }, []);
+
+  const selectedCreator = creators.find(c => c._id === selectedCreatorId);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const text = `Hi NexusMedia! 👋\n\n*Name:* ${name}\n*Service:* ${service}\n*Budget:* ${budget}\n*Details:* ${message}`;
+    
+    if (!whatsappNumber) {
+      alert("WhatsApp number not available. Please try again later.");
+      return;
+    }
+
+    const finalBudget = budget === "Custom" ? customBudget : budget;
+    const creatorMention = selectedCreator ? `\n*Interested Creator:* ${selectedCreator.name}` : "";
+    const text = `Hi NexusMedia! 👋\n\n*Name:* ${name}\n*Service:* ${service}\n*Budget:* ${finalBudget}${creatorMention}\n*Details:* ${message}`;
     const encoded = encodeURIComponent(text);
-    window.open(`https://wa.me/923104833310?text=${encoded}`, "_blank");
+    const cleanNumber = whatsappNumber.replace(/[^\d+]/g, "");
+    window.open(`https://wa.me/${cleanNumber}?text=${encoded}`, "_blank");
   };
 
   return (
@@ -51,6 +100,39 @@ const HireNow = () => {
           onSubmit={handleSubmit}
           className="max-w-2xl mx-auto bg-card border border-border rounded-2xl p-8 lg:p-10 shadow-xl space-y-6"
         >
+          {/* Select Creator */}
+          <div>
+            <label className="flex items-center gap-2 text-sm font-semibold text-foreground mb-2">
+              <Users size={15} /> Want to Work with a Specific Creator?
+            </label>
+            <select
+              value={selectedCreatorId}
+              onChange={(e) => setSelectedCreatorId(e.target.value)}
+              className="w-full px-4 py-3 rounded-xl border border-input bg-background text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
+            >
+              <option value="">Select a creator (optional)</option>
+              {creatorLoading ? (
+                <option disabled>Loading creators...</option>
+              ) : (
+                creators.map((creator) => (
+                  <option key={creator._id} value={creator._id}>
+                    {creator.name} - {creator.category} ({creator.price})
+                  </option>
+                ))
+              )}
+            </select>
+            {selectedCreator && (
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="mt-3 p-3 bg-secondary/50 border border-border rounded-lg"
+              >
+                <p className="text-xs text-muted-foreground">Selected Creator</p>
+                <p className="font-semibold text-foreground">{selectedCreator.name}</p>
+                <p className="text-xs text-muted-foreground">{selectedCreator.category} • {selectedCreator.price}</p>
+              </motion.div>
+            )}
+          </div>
           {/* Name */}
           <div>
             <label className="flex items-center gap-2 text-sm font-semibold text-foreground mb-2">
@@ -93,12 +175,15 @@ const HireNow = () => {
             <label className="flex items-center gap-2 text-sm font-semibold text-foreground mb-2">
               <DollarSign size={15} /> Budget Range
             </label>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
               {budgetOptions.map((b) => (
                 <button
                   type="button"
                   key={b}
-                  onClick={() => setBudget(b)}
+                  onClick={() => {
+                    setBudget(b);
+                    setCustomBudget("");
+                  }}
                   className={`px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
                     budget === b
                       ? "gradient-bg text-accent-foreground"
@@ -108,7 +193,29 @@ const HireNow = () => {
                   {b}
                 </button>
               ))}
+              <button
+                type="button"
+                onClick={() => setBudget("Custom")}
+                className={`px-4 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 ${
+                  budget === "Custom"
+                    ? "gradient-bg text-accent-foreground"
+                    : "bg-secondary text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Custom
+              </button>
             </div>
+            {budget === "Custom" && (
+              <motion.input
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                type="text"
+                placeholder="Enter your budget (e.g., $15,000 or $2,000/month)"
+                value={customBudget}
+                onChange={(e) => setCustomBudget(e.target.value)}
+                className="w-full px-4 py-2.5 rounded-xl border border-input bg-background text-foreground text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring transition-shadow"
+              />
+            )}
           </div>
 
           {/* Message */}

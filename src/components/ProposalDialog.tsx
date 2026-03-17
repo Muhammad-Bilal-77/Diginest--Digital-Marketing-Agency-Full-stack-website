@@ -20,6 +20,7 @@ const ProposalDialog = ({ open, onOpenChange, mode }: ProposalDialogProps) => {
   const [phone, setPhone] = useState("");
   const [service, setService] = useState("");
   const [budget, setBudget] = useState("");
+  const [customBudget, setCustomBudget] = useState("");
   const [message, setMessage] = useState("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -47,9 +48,10 @@ const ProposalDialog = ({ open, onOpenChange, mode }: ProposalDialogProps) => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const isConsultation = mode === "consultation";
+    const finalBudget = budget === "Custom" ? customBudget : budget;
     const text = isConsultation
       ? `Hi Digi nest! 👋\n\n*Consultation Booking*\n*Name:* ${name}\n*Email:* ${email}\n*Phone:* ${phone}\n*Service:* ${service}\n*Preferred Date:* ${date}\n*Preferred Time:* ${time}\n*Details:* ${message}`
-      : `Hi Digi nest! 👋\n\n*Free Proposal Request*\n*Name:* ${name}\n*Email:* ${email}\n*Phone:* ${phone}\n*Service:* ${service}\n*Budget:* ${budget}\n*Details:* ${message}`;
+      : `Hi Digi nest! 👋\n\n*Free Proposal Request*\n*Name:* ${name}\n*Email:* ${email}\n*Phone:* ${phone}\n*Service:* ${service}\n*Budget:* ${finalBudget}\n*Details:* ${message}`;
     window.open(`https://wa.me/${whatsappNumber}?text=${encodeURIComponent(text)}`, "_blank");
     toast({ title: "Redirecting to WhatsApp", description: "Complete your inquiry on WhatsApp." });
     onOpenChange(false);
@@ -57,7 +59,7 @@ const ProposalDialog = ({ open, onOpenChange, mode }: ProposalDialogProps) => {
   };
 
   const resetForm = () => {
-    setName(""); setEmail(""); setPhone(""); setService(""); setBudget(""); setMessage(""); setDate(""); setTime("");
+    setName(""); setEmail(""); setPhone(""); setService(""); setBudget(""); setCustomBudget(""); setMessage(""); setDate(""); setTime("");
   };
 
   const isConsultation = mode === "consultation";
@@ -123,16 +125,34 @@ const ProposalDialog = ({ open, onOpenChange, mode }: ProposalDialogProps) => {
               <label className="flex items-center gap-1.5 text-xs font-semibold text-foreground mb-1.5">
                 <DollarSign size={13} /> Budget Range
               </label>
-              <div className="grid grid-cols-2 gap-1.5">
+              <div className="grid grid-cols-2 gap-1.5 mb-2">
                 {budgetOptions.map((b) => (
-                  <button type="button" key={b} onClick={() => setBudget(b)}
+                  <button type="button" key={b} onClick={() => {
+                    setBudget(b);
+                    setCustomBudget("");
+                  }}
                     className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
                       budget === b ? "gradient-bg text-accent-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"
                     }`}>
                     {b}
                   </button>
                 ))}
+                <button type="button" onClick={() => setBudget("Custom")}
+                  className={`px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
+                    budget === "Custom" ? "gradient-bg text-accent-foreground" : "bg-secondary text-muted-foreground hover:text-foreground"
+                  }`}>
+                  Custom
+                </button>
               </div>
+              {budget === "Custom" && (
+                <input
+                  type="text"
+                  placeholder="Enter your budget"
+                  value={customBudget}
+                  onChange={(e) => setCustomBudget(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg text-xs border border-input bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+                />
+              )}
             </div>
           )}
 

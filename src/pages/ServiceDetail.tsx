@@ -72,25 +72,33 @@ const ServiceDetail = () => {
   const [service, setService] = useState<Service | null>(null);
   const [allServices, setAllServices] = useState<Service[]>([]);
   const [loading, setLoading] = useState(true);
+  const [whatsappNumber, setWhatsappNumber] = useState("");
 
   useEffect(() => {
-    const fetchServices = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch("/api/services");
-        const data: Service[] = await response.json();
-        setAllServices(data);
+        const [servicesRes, settingsRes] = await Promise.all([
+          fetch("/api/services"),
+          fetch("/api/settings"),
+        ]);
+
+        const servicesData: Service[] = await servicesRes.json();
+        const settingsData = await settingsRes.json();
+        
+        setAllServices(servicesData);
+        setWhatsappNumber(settingsData.whatsappNumber || "");
 
         // Find the service by slug
-        const found = data.find((s) => s.slug === slug);
+        const found = servicesData.find((s) => s.slug === slug);
         setService(found || null);
       } catch (error) {
-        console.error("Failed to fetch services:", error);
+        console.error("Failed to fetch data:", error);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchServices();
+    fetchData();
   }, [slug]);
 
   if (loading) {
@@ -163,7 +171,7 @@ const ServiceDetail = () => {
                 {service.description.slice(0, 180)}...
               </p>
               <div className="flex flex-wrap gap-4 mb-12">
-                <a href={`https://wa.me/923104833310?text=Hi!%20I'm%20interested%20in%20your%20${encodeURIComponent(service.title)}%20service`}
+                <a href={`https://wa.me/${whatsappNumber.replace(/[^\d+]/g, "")}?text=Hi!%20I'm%20interested%20in%20your%20${encodeURIComponent(service.title)}%20service`}
                    target="_blank" rel="noopener noreferrer"
                    className="gradient-bg text-accent-foreground px-8 py-3.5 rounded-xl text-sm font-bold hover:opacity-90 transition-all hover:shadow-lg hover:shadow-accent/20">
                   Get Started Today

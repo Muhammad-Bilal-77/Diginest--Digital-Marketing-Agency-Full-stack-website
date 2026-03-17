@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Users, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
+import HireCreatorDialog from "./HireCreatorDialog";
 
 interface Creator {
   _id: string;
@@ -16,6 +17,8 @@ interface Creator {
 const InfluencerSection = () => {
   const [creators, setCreators] = useState<Creator[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedCreator, setSelectedCreator] = useState<Creator | null>(null);
+  const [hireDialogOpen, setHireDialogOpen] = useState(false);
 
   useEffect(() => {
     const fetchCreators = async () => {
@@ -101,14 +104,27 @@ const InfluencerSection = () => {
                     <DollarSign size={14} /> {c.price}
                   </div>
                 </div>
-                <Link to="/hire" className="block w-full gradient-bg text-accent-foreground py-2.5 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity text-center">
+                <button
+                  onClick={() => {
+                    setSelectedCreator(c);
+                    setHireDialogOpen(true);
+                  }}
+                  className="block w-full gradient-bg text-accent-foreground py-2.5 rounded-lg text-xs font-bold hover:opacity-90 transition-opacity text-center"
+                >
                   Hire Now
-                </Link>
+                </button>
               </div>
             </motion.div>
           ))}
         </div>
       </div>
+
+      {/* Hire Creator Dialog */}
+      <HireCreatorDialog
+        open={hireDialogOpen}
+        onOpenChange={setHireDialogOpen}
+        creator={selectedCreator}
+      />
     </section>
   );
 };
