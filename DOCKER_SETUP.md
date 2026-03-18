@@ -66,8 +66,10 @@ docker run -p 5000:5000 \
 ## Accessing the API
 
 Once running:
-- **API**: http://localhost:5000/api/
-- **Health Check**: http://localhost:5000/api/health
+- **API**: http://localhost:5000/api/ (local with docker-compose)
+- **API**: http://your-koyeb-domain.com:8000/api/ (on Koyeb)
+- **Health Check**: http://localhost:5000/api/health (local)
+- **Health Check**: http://your-koyeb-domain.com:8000/api/health (on Koyeb)
 
 ## Environment Variables
 
@@ -120,10 +122,11 @@ For production deployment on services like Koyeb:
 
 1. Push the code to a Git repository
 2. Connect the repository to your Docker host
-3. Set environment variables in the deployment platform
+3. Set environment variables in the deployment platform (no need to set PORT - defaults to 8000)
 4. The Docker build will automatically:
    - Install dependencies
-   - Start the backend server on port 5000
+   - Start the backend server on port 8000 (Koyeb's standard)
+5. Access the API at: `https://your-koyeb-domain.com/api/`
 
 ## Docker Image Optimization
 

@@ -13,12 +13,12 @@ RUN npm install --omit=dev
 # Copy the backend source code
 COPY server ./
 
-# Expose port
-EXPOSE 5000
+# Expose port 8000 (Koyeb standard)
+EXPOSE 8000
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 5000) + '/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
+  CMD node -e "require('http').get('http://localhost:' + (process.env.PORT || 8000) + '/api/health', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"
 
 # Start the backend server
 CMD ["npm", "start"]
