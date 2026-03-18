@@ -4,20 +4,17 @@ FROM node:20-alpine
 # Set working directory in container
 WORKDIR /app
 
-# Copy package.json and package-lock.json
-COPY package*.json ./
+# Copy server package.json and package-lock.json
+COPY server/package*.json ./
 
 # Install production dependencies only
 RUN npm install --omit=dev
 
 # Copy the backend source code
-COPY server ./server
+COPY server ./
 
 # Expose port
 EXPOSE 5000
-
-# Set working directory to server
-WORKDIR /app/server
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
