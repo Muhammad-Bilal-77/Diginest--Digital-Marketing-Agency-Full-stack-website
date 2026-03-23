@@ -12,7 +12,8 @@ const app = express();
 
 app.use(
   cors({
-    origin: env.clientOrigin,
+    // Reflect request origin to support deployed frontends on any domain.
+    origin: true,
     credentials: true,
   })
 );

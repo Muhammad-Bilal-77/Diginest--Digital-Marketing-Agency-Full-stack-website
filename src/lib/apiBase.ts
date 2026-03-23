@@ -1,4 +1,5 @@
-const DEFAULT_API_BASE =
+const LOCAL_API_BASE = "http://localhost:8000/api";
+const LIVE_API_BASE =
   "https://reliable-verene-umair-digital-68123777.koyeb.app/api";
 
 function trimTrailingSlash(value: string) {
@@ -6,12 +7,14 @@ function trimTrailingSlash(value: string) {
 }
 
 export function getApiBase() {
-  const configuredApiBase = import.meta.env.VITE_API_BASE_URL?.trim();
-  if (configuredApiBase) {
-    return trimTrailingSlash(configuredApiBase);
+  if (typeof window !== "undefined") {
+    const host = window.location.hostname;
+    if (host === "localhost" || host === "127.0.0.1") {
+      return trimTrailingSlash(LOCAL_API_BASE);
+    }
   }
 
-  return DEFAULT_API_BASE;
+  return trimTrailingSlash(LIVE_API_BASE);
 }
 
 export function buildApiUrl(path: string) {

@@ -57,13 +57,10 @@ npm run dev
 
 ## Frontend API URL configuration
 
-Frontend requests use `VITE_API_BASE_URL`.
+Frontend requests use static URLs in code (`src/lib/apiBase.ts`):
 
-- Default is set in `.env` to your live backend:
-	`https://reliable-verene-umair-digital-68123777.koyeb.app/api`
-- For deployment, set `VITE_API_BASE_URL` in your frontend hosting environment.
-- For local backend usage, copy `.env.local.example` to `.env.local` and set:
-	`VITE_API_BASE_URL=http://localhost:8000/api`
+- Local frontend (`localhost` or `127.0.0.1`) -> `http://localhost:8000/api`
+- Deployed frontend (any non-local host) -> `https://reliable-verene-umair-digital-68123777.koyeb.app/api`
 
 ## Notes
 
