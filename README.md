@@ -55,7 +55,15 @@ npm run dev:server
 npm run dev
 ```
 
-Vite is configured to proxy `/api` to `http://localhost:5000` during local development.
+## Frontend API URL configuration
+
+Frontend requests use `VITE_API_BASE_URL`.
+
+- Default is set in `.env` to your live backend:
+	`https://reliable-verene-umair-digital-68123777.koyeb.app/api`
+- For deployment, set `VITE_API_BASE_URL` in your frontend hosting environment.
+- For local backend usage, copy `.env.local.example` to `.env.local` and set:
+	`VITE_API_BASE_URL=http://localhost:8000/api`
 
 ## Notes
 

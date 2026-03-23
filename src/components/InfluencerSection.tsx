@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import { Users, DollarSign } from "lucide-react";
 import { Link } from "react-router-dom";
 import HireCreatorDialog from "./HireCreatorDialog";
+import { buildApiUrl } from "@/lib/apiBase";
 
 interface Creator {
   _id: string;
@@ -23,7 +24,7 @@ const InfluencerSection = () => {
   useEffect(() => {
     const fetchCreators = async () => {
       try {
-        const response = await fetch("/api/creators");
+        const response = await fetch(buildApiUrl("/creators"));
         const data = await response.json();
         setCreators(data);
       } catch (error) {

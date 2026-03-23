@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { ArrowLeft, Send, User, Briefcase, DollarSign, MessageSquare, Users } from "lucide-react";
 import { Link } from "react-router-dom";
+import { buildApiUrl } from "@/lib/apiBase";
 
 const budgetOptions = ["$500 - $1,000", "$1,000 - $3,000", "$3,000 - $5,000", "$5,000+"];
 const serviceOptions = ["Web Design", "Digital Marketing", "SEO Optimization", "Social Media Marketing", "Branding & Graphic Design", "Paid Advertising", "Influencer Marketing"];
@@ -31,8 +32,8 @@ const HireNow = () => {
     const fetchData = async () => {
       try {
         const [creatorsRes, settingsRes] = await Promise.all([
-          fetch("/api/creators"),
-          fetch("/api/settings"),
+          fetch(buildApiUrl("/creators")),
+          fetch(buildApiUrl("/settings")),
         ]);
         
         const creatorsData = await creatorsRes.json();

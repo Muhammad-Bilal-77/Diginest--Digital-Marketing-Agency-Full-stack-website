@@ -8,6 +8,7 @@ import {
   AlertDialogTitle,
   AlertDialogDescription,
 } from "@/components/ui/alert-dialog";
+import { buildApiUrl } from "@/lib/apiBase";
 
 interface Creator {
   _id: string;
@@ -49,7 +50,7 @@ const HireCreatorDialog = ({ open, onOpenChange, creator }: HireCreatorDialogPro
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch("/api/settings");
+        const response = await fetch(buildApiUrl("/settings"));
         const settings = await response.json();
         setWhatsappNumber(settings.whatsappNumber || "");
       } catch (error) {

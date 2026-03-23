@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ArrowUpRight, Eye, X, CheckCircle2, TrendingUp, Users, BarChart3 } from "lucide-react";
+import { buildApiUrl } from "@/lib/apiBase";
 
 interface Project {
   _id: string;
@@ -56,8 +57,8 @@ const PortfolioSection = () => {
     const fetchData = async () => {
       try {
         const [projectsRes, settingsRes] = await Promise.all([
-          fetch("/api/projects"),
-          fetch("/api/settings"),
+          fetch(buildApiUrl("/projects")),
+          fetch(buildApiUrl("/settings")),
         ]);
 
         const projectsData = await projectsRes.json();

@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Send, User, Briefcase, DollarSign, MessageSquare, Calendar, Clock } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { buildApiUrl } from "@/lib/apiBase";
 
 const serviceOptions = ["Web Design", "Digital Marketing", "SEO Optimization", "Social Media Marketing", "Branding & Graphic Design", "Paid Advertising", "Influencer Marketing"];
 const budgetOptions = ["$500 - $1,000", "$1,000 - $3,000", "$3,000 - $5,000", "$5,000+"];
@@ -29,7 +30,7 @@ const ProposalDialog = ({ open, onOpenChange, mode }: ProposalDialogProps) => {
   useEffect(() => {
     const fetchSettings = async () => {
       try {
-        const response = await fetch("/api/settings");
+        const response = await fetch(buildApiUrl("/settings"));
         if (response.ok) {
           const data = await response.json();
           const cleaned = data.whatsappNumber.replace(/\D/g, "");

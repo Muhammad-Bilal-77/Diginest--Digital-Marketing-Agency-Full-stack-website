@@ -6,6 +6,7 @@ import * as Icons from "lucide-react";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import CTASection from "@/components/CTASection";
+import { buildApiUrl } from "@/lib/apiBase";
 
 interface Service {
   _id: string;
@@ -78,8 +79,8 @@ const ServiceDetail = () => {
     const fetchData = async () => {
       try {
         const [servicesRes, settingsRes] = await Promise.all([
-          fetch("/api/services"),
-          fetch("/api/settings"),
+          fetch(buildApiUrl("/services")),
+          fetch(buildApiUrl("/settings")),
         ]);
 
         const servicesData: Service[] = await servicesRes.json();

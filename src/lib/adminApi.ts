@@ -1,3 +1,5 @@
+import { buildApiUrl } from "@/lib/apiBase";
+
 export interface AdminService {
   _id: string;
   title: string;
@@ -64,10 +66,6 @@ export interface AdminAbout {
 
 const TOKEN_KEY = "nexus_admin_token";
 
-function getApiBase() {
-  return import.meta.env.VITE_API_BASE_URL || "/api";
-}
-
 function getToken() {
   return localStorage.getItem(TOKEN_KEY);
 }
@@ -78,7 +76,7 @@ function getAuthHeaders() {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
-  const response = await fetch(`${getApiBase()}${path}`, {
+  const response = await fetch(buildApiUrl(path), {
     ...init,
     headers: {
       "Content-Type": "application/json",
@@ -239,7 +237,7 @@ export async function uploadImage(file: File) {
   const formData = new FormData();
   formData.append("image", file);
 
-  const response = await fetch(`${getApiBase()}/upload/image`, {
+  const response = await fetch(buildApiUrl("/upload/image"), {
     method: "POST",
     headers: {
       ...getAuthHeaders(),

@@ -2,6 +2,7 @@ import { Mail, Phone, MapPin } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import ProposalDialog from "./ProposalDialog";
+import { buildApiUrl } from "@/lib/apiBase";
 
 interface Service {
   _id: string;
@@ -27,14 +28,14 @@ const Footer = () => {
     const fetchData = async () => {
       try {
         // Fetch services
-        const servicesResponse = await fetch("/api/services");
+        const servicesResponse = await fetch(buildApiUrl("/services"));
         if (servicesResponse.ok) {
           const servicesData = await servicesResponse.json();
           setServices(servicesData);
         }
 
         // Fetch settings
-        const settingsResponse = await fetch("/api/settings");
+        const settingsResponse = await fetch(buildApiUrl("/settings"));
         if (settingsResponse.ok) {
           const settingsData = await settingsResponse.json();
           setSettings(settingsData);

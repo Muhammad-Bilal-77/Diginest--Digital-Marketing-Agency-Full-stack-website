@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Palette, BarChart3, Search, Share2, PenTool, Megaphone, ArrowUpRight } from "lucide-react";
 import { Link } from "react-router-dom";
+import { buildApiUrl } from "@/lib/apiBase";
 
 interface Service {
   _id: string;
@@ -34,7 +35,7 @@ const ServicesSection = () => {
   useEffect(() => {
     const fetchServices = async () => {
       try {
-        const response = await fetch("/api/services");
+        const response = await fetch(buildApiUrl("/services"));
         const data = await response.json();
         setServices(data);
       } catch (error) {

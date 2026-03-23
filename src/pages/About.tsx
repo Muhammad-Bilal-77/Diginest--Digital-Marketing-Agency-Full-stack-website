@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Check } from "lucide-react";
 import Navbar from "@/components/Navbar";
+import { buildApiUrl } from "@/lib/apiBase";
 
 interface AboutData {
   _id?: string;
@@ -23,7 +24,7 @@ const About = () => {
   useEffect(() => {
     const fetchAbout = async () => {
       try {
-        const response = await fetch("/api/about");
+        const response = await fetch(buildApiUrl("/about"));
         if (response.ok) {
           const data = await response.json();
           setAbout(data);
