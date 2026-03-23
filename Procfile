@@ -1,1 +1,1 @@
-web: npm run start:server
+web: npm --prefix server install --omit=dev && npm --prefix server run start
