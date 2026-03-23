@@ -12,6 +12,7 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
+    "start": "npm run start:server",
     "start:server": "npm --prefix server run start"
   },
   "dependencies": {
