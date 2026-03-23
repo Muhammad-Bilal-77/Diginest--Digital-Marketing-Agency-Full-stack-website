@@ -30,8 +30,8 @@ CLOUDINARY_API_SECRET=your-api-secret
 # Client Origin (Frontend URL)
 CLIENT_ORIGIN=https://your-frontend-domain.com
 
-# Port (optional, defaults to 5000)
-PORT=5000
+# Port (optional, defaults to 8000)
+PORT=8000
 ```
 
 ## Deployment Steps on Koyeb
@@ -40,7 +40,7 @@ PORT=5000
 ```bash
 cd server
 docker build -t prestige-pixel-backend:latest .
-docker run -p 5000:5000 \
+docker run -p 8000:8000 \
   -e MONGODB_URI="..." \
   -e JWT_SECRET="..." \
   -e ADMIN_USERNAME="admin" \
@@ -68,7 +68,7 @@ docker run -p 5000:5000 \
 7. Add Environment Variables:
    - Click "Environment" tab
    - Add all required environment variables from above
-8. Set port: 5000
+8. Set port: 8000
 9. Click "Deploy"
 
 #### Option B: Using Koyeb CLI
@@ -119,7 +119,7 @@ koyeb apps create prestige-pixel-backend \
 ## Port Configuration
 
 - Koyeb will automatically assign a public port
-- Your app listens on internal port 5000 (configurable via PORT env var)
+- Your app listens on internal port 8000 (configurable via PORT env var)
 - No need to expose port in Dockerfile for Koyeb (but it's included)
 
 ## Health Check

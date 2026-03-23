@@ -1,6 +1,9 @@
 import dotenv from "dotenv";
 
-dotenv.config();
+// In production, rely on platform-provided environment variables.
+if (process.env.NODE_ENV !== "production") {
+  dotenv.config();
+}
 
 const requiredKeys = [
   "MONGODB_URI",

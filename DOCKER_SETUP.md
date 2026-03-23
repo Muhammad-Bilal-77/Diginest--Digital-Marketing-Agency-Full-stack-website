@@ -41,7 +41,7 @@ docker-compose up
 docker build -t prestige-pixel-backend:latest .
 
 # Run the container
-docker run -p 5000:5000 \
+docker run -p 5000:8000 \
   --env-file server/.env \
   prestige-pixel-backend:latest
 ```
@@ -50,7 +50,7 @@ docker run -p 5000:5000 \
 
 - Installs Node.js dependencies (production only)
 - Copies the backend source code
-- Exposes port 5000 for API access
+- Exposes container port 8000 for API access (mapped to host port 5000 in local docker-compose)
 - Runs Express server with health checks
 
 ## File Structure in Docker
@@ -85,7 +85,7 @@ See `server/.env.example` for all required environment variables:
 | `CLOUDINARY_API_KEY` | Cloudinary API key | `your-api-key` |
 | `CLOUDINARY_API_SECRET` | Cloudinary API secret | `your-api-secret` |
 | `CLIENT_ORIGIN` | Frontend URL for CORS | `http://localhost:3000` |
-| `PORT` | Server port | `5000` |
+| `PORT` | Server port | `8000` |
 | `NODE_ENV` | Environment | `production` or `development` |
 
 ## Troubleshooting
